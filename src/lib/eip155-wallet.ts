@@ -17,7 +17,7 @@ import { EIP155_CHAINS, EIP155_METHODS, TEIP155Chain } from "../data/eip155";
 import {
   getSignParamsMessage,
   getSignTypedDataParamsData,
-} from "../utils/HelperUtils";
+} from "../utils/misc";
 import { RequestEventArgs } from "../types/common";
 /**
  * Types
