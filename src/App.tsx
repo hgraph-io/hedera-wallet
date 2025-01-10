@@ -1,132 +1,126 @@
-import { useEffect } from "react";
+import "./App.css";
+import { useEffect, useState } from "react";
 import useHederaWallet from "./hooks/useHederaWallet";
 
 function App() {
   const { initialize, isInitialized, pair, disconnect } = useHederaWallet();
-
-  console.log("WalletKit ClientID: ", import.meta.env.VITE_REOWN_PROJECT_ID);
+  const [accountId, setAccountId] = useState("");
+  const [privateKey, setPrivateKey] = useState("");
+  const [uri, setUri] = useState("");
 
   useEffect(() => {
-    const accountId = localStorage.getItem("accountId");
-    const privateKey = localStorage.getItem("privateKey");
-    if (!accountId || !privateKey) return;
-    initialize(accountId, privateKey, "testnet");
-  }, [initialize]);
+    const storedAccountId = localStorage.getItem("accountId");
+    const storedPrivateKey = localStorage.getItem("privateKey");
+    if (!storedAccountId || !storedPrivateKey) return;
+    initialize(storedAccountId, storedPrivateKey, "testnet");
+  }, []);
 
-  const initHandler = async (e: React.FormEvent<HTMLFormElement>) => {
+  const initHandler = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const accountId = formData.get("account-id") as string;
-    const privateKey = formData.get("private-key") as string;
     localStorage.setItem("accountId", accountId);
     localStorage.setItem("privateKey", privateKey);
-    await initialize(accountId, privateKey, "testnet");
+    initialize(accountId, privateKey, "testnet");
   };
+
+  const handlePairing = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    pair(uri);
+  };
+
   return (
-    <main>
-      <h1>EIP-155 & HIP-820 Wallet</h1>
-      <div>
-        <p>
-          This demo requires a Hedera testnet account as well as a project id
-          from WalletKit.
-        </p>
-        <p>
-          Please see
-          <a target="_blank" href="https://portal.hedera.com">
-            {" "}
-            https://portal.hedera.com{" "}
-          </a>
-          and{" "}
-          <a target="_blank" href="https://cloud.reown.com">
-            https://cloud.reown.com
-          </a>
-        </p>
-        <p>
-          <b>Disclaimer:</b> This demo is for demonstration purposes only. It is
-          not intended to be used in production. Do not use your mainnet account
-          or private key!
-        </p>
-        <section>
-          <form id="init" onSubmit={initHandler}>
-            <fieldset>
-              <legend>
-                Step 1: Initialize WalletKit and set ECDSA hedera account
-              </legend>
-              <p>
-                <i>
-                  For brevity, this demo only supports a single account, though
-                  WalletKit supports multiple accounts.
-                </i>
-              </p>
-              <label>
-                Hedera Testnet Account Id:
-                <input type="text" name="account-id" required />
-              </label>
-              <label>
-                Hedera Testnet Hex Encoded Private Key:
-                <input type="password" name="private-key" required />
-              </label>
-            </fieldset>
-            <button type="submit" disabled={isInitialized}>
-              Initialize WalletConnect
-            </button>
-          </form>
-        </section>
-        <section>
-          <form
-            className="toggle"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const uri = (e.target as HTMLFormElement).uri.value;
-              pair(uri);
-            }}
-          >
-            <fieldset>
-              <legend>Step 3: Connect a dApp</legend>
-              <p>
-                <i>
-                  WalletKit saves pairing and session information in
-                  localStorage. If you've previously paired with a dApp and the
-                  session has not expired, you do not need to pair again.
-                </i>
-              </p>
-              <label>
-                dApp pairing string
-                <input type="text" name="uri" required />
-              </label>
-            </fieldset>
-            <button type="submit" disabled={!isInitialized}>
-              Pair
-            </button>
-          </form>
-        </section>
-        <hr />
-        <h2>Pairing and session management:</h2>
-        <section>
-          <form
-            className="toggle"
-            onSubmit={async (e) => {
-              e.preventDefault();
-              await disconnect();
-            }}
-          >
-            <button type="submit" disabled={!isInitialized}>
-              Disconnect all sessions and pairings
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                localStorage.clear();
-                sessionStorage.clear();
-                location.reload();
-              }}
-            >
-              Clear saved data
-            </button>
-          </form>
-        </section>
+    <div className="pages">
+      <div className="logos">
+        <img
+          src="/reown.svg"
+          alt="Reown"
+          style={{ width: "150px", height: "150px" }}
+        />
+        <img
+          src="/hedera.svg"
+          alt="Hedera"
+          style={{ width: "90px", height: "90px" }}
+        />
       </div>
-    </main>
+
+      <h1>WalletKit EIP-155 & HIP-820 Hedera Wallet Example</h1>
+      <section>
+        <p>
+          This demo requires a Hedera testnet account and a project ID from
+          WalletKit. Visit{" "}
+          <a target="_blank" href="https://portal.hedera.com">
+            Hedera Portal
+          </a>{" "}
+          or{" "}
+          <a target="_blank" href="https://cloud.reown.com">
+            Reown Cloud
+          </a>{" "}
+          for details.
+        </p>
+        <p>
+          <b>Disclaimer:</b> Do not use your mainnet account or private key in
+          this demo.
+        </p>
+      </section>
+      <section>
+        <form onSubmit={initHandler}>
+          <fieldset>
+            <legend>Step 1: Initialize Wallet</legend>
+            <label>
+              Hedera Testnet Account Id:
+              <input
+                type="text"
+                value={accountId}
+                onChange={(e) => setAccountId(e.target.value)}
+                required
+              />
+            </label>
+            <label>
+              Hedera Testnet Private Key:
+              <input
+                type="password"
+                value={privateKey}
+                onChange={(e) => setPrivateKey(e.target.value)}
+                required
+              />
+            </label>
+          </fieldset>
+          <button type="submit" disabled={isInitialized}>
+            {isInitialized ? "Initialized" : "Initialize WalletConnect"}
+          </button>
+        </form>
+      </section>
+      <section>
+        <form onSubmit={handlePairing}>
+          <fieldset>
+            <legend>Step 3: Connect a dApp</legend>
+            <label>
+              dApp pairing string:
+              <input
+                type="text"
+                value={uri}
+                onChange={(e) => setUri(e.target.value)}
+                required
+              />
+            </label>
+          </fieldset>
+          <button type="submit" disabled={!isInitialized}>
+            Pair
+          </button>
+        </form>
+      </section>
+      <section>
+        <button
+          onClick={() => {
+            disconnect();
+            localStorage.clear();
+            sessionStorage.clear();
+          }}
+          disabled={!isInitialized}
+        >
+          Disconnect & Clear Data
+        </button>
+      </section>
+    </div>
   );
 }
 

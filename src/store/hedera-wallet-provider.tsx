@@ -2,9 +2,8 @@ import {
   PropsWithChildren,
   createContext,
   useState,
-  useEffect,
-  useCallback,
   useRef,
+  useEffect,
 } from "react";
 import {
   HederaChainId,
@@ -58,9 +57,10 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
   const [network, setNetwork] = useState<"testnet" | "mainnet">("testnet");
 
   async function createWalletKit(): Promise<IWalletKit> {
+    console.log("Creating WalletKit");
     const core = new Core({
       projectId: import.meta.env.VITE_REOWN_PROJECT_ID,
-      logger: "trace",
+      logger: "error",
     });
     const walletkit = await WalletKit.init({
       core,
@@ -85,45 +85,49 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
     }
   }
 
-  const initialize = useCallback(
-    async (
-      accountId: string,
-      privateKey: string,
-      network: "testnet" | "mainnet",
+  useEffect(() => {
+    console.log({ eip155Wallet });
+  }, [eip155Wallet]);
+  useEffect(() => {
+    console.log({ hip820Wallet });
+  }, [hip820Wallet]);
+
+  const initialize = async (
+    accountId: string,
+    privateKey: string,
+    network: "testnet" | "mainnet",
+  ) => {
+    if (isInitialized || walletkit.current) {
+      return;
+    }
+    console.trace("initialize wallets");
+    try {
+      setNetwork(network);
+      const eip155Wallet = EIP155Wallet.init({ privateKey });
+      const hip820Wallet = HIP820Wallet.init({
+        chainId: `hedera:${network}` as HederaChainId,
+        accountId,
+        privateKey,
+      });
+      setEip155Wallet(eip155Wallet);
+      setHip820Wallet(hip820Wallet);
+      walletkit.current = await createWalletKit();
+
+      setInitialized(true);
+    } catch (err: unknown) {
+      console.error("Initialization failed", err);
+      alert(err);
+    }
+  };
+
+  useEffect(() => {
+    if (!walletkit.current) return;
+    /******************************************************************************
+     * 1. Open session proposal modal for confirmation / rejection
+     *****************************************************************************/
+    const onSessionProposal = async (
+      proposal: SignClientTypes.EventArguments["session_proposal"],
     ) => {
-      if (isInitialized) {
-        return;
-      }
-      try {
-        setNetwork(network);
-        const eip155Wallet = EIP155Wallet.init({ privateKey });
-        const hip820Wallet = HIP820Wallet.init({
-          chainId: `hedera:${network}` as HederaChainId,
-          accountId,
-          privateKey,
-        });
-        setEip155Wallet(eip155Wallet);
-        setHip820Wallet(hip820Wallet);
-
-        console.log(eip155Wallet.getEvmAddress());
-        if (!walletkit.current) {
-          walletkit.current = await createWalletKit();
-        }
-
-        setInitialized(true);
-      } catch (err: unknown) {
-        console.error("Initialization failed", err);
-        alert(err);
-      }
-    },
-    [isInitialized],
-  );
-
-  /******************************************************************************
-   * 1. Open session proposal modal for confirmation / rejection
-   *****************************************************************************/
-  const onSessionProposal = useCallback(
-    async (proposal: SignClientTypes.EventArguments["session_proposal"]) => {
       console.log("session_proposal", proposal);
       if (!walletkit.current) {
         throw new Error("WalletKit not initialized");
@@ -193,15 +197,14 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
       } catch (e) {
         alert((e as Error).message);
       }
-    },
-    [eip155Wallet, hip820Wallet, network],
-  );
+    };
 
-  /******************************************************************************
-   * 3. Open request handling modal based on method that was used
-   *****************************************************************************/
-  const onSessionRequest = useCallback(
-    async (requestEvent: SignClientTypes.EventArguments["session_request"]) => {
+    /******************************************************************************
+     * 3. Open request handling modal based on method that was used
+     *****************************************************************************/
+    const onSessionRequest = async (
+      requestEvent: SignClientTypes.EventArguments["session_request"],
+    ) => {
       try {
         const { topic, params } = requestEvent;
         if (!walletkit.current) {
@@ -242,39 +245,34 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
       } catch (e) {
         alert((e as Error).message);
       }
-    },
+    };
+    console.log("Set up WalletConnect event listeners");
+    walletkit.current.on("session_proposal", (...args) =>
+      onSessionProposal(...args),
+    );
+    walletkit.current.on("session_request", (...args) =>
+      onSessionRequest(...args),
+    );
 
-    [eip155Wallet, hip820Wallet],
-  );
-
-  /******************************************************************************
-   * Set up WalletConnect event listeners
-   *****************************************************************************/
-  useEffect(() => {
-    if (isInitialized && walletkit.current) {
-      //sign
-      walletkit.current.on("session_proposal", onSessionProposal);
-      walletkit.current.on("session_request", onSessionRequest);
-
-      walletkit.current.engine.signClient.events.on("session_ping", (data) =>
-        console.log("ping", data),
-      );
-      walletkit.current.on("session_delete", (data) => {
-        console.log("session_delete event received", data);
-      });
-      walletkit.current.core.pairing.events.on(
-        "pairing_delete",
-        (pairing: string) => {
-          // Session was deleted
-          console.log(pairing);
-          console.log(`Wallet: Pairing deleted by dapp!`);
-          // clean up after the pairing for `topic` was deleted.
-        },
-      );
-    }
-  }, [isInitialized, onSessionProposal, onSessionRequest]);
+    walletkit.current.engine.signClient.events.on("session_ping", (data) =>
+      console.log("ping", data),
+    );
+    walletkit.current.on("session_delete", (data) => {
+      console.log("session_delete event received", data);
+    });
+    walletkit.current.core.pairing.events.on(
+      "pairing_delete",
+      (pairing: string) => {
+        // Session was deleted
+        console.log(pairing);
+        console.log(`Wallet: Pairing deleted by dapp!`);
+        // clean up after the pairing for `topic` was deleted.
+      },
+    );
+  }, [eip155Wallet, hip820Wallet, network, isInitialized]);
 
   async function disconnect() {
+    console.log("Disconnecting from WalletConnect");
     if (!walletkit.current) {
       throw new Error("WalletKit not initialized");
     }
