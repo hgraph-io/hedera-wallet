@@ -4,6 +4,7 @@ import {
   useState,
   useRef,
   useEffect,
+  useCallback,
 } from "react";
 import {
   HederaChainId,
@@ -92,7 +93,7 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
     console.log({ hip820Wallet });
   }, [hip820Wallet]);
 
-  const initialize = async (
+  const initialize = useCallback(async (
     accountId: string,
     privateKey: string,
     network: "testnet" | "mainnet",
@@ -118,7 +119,7 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
       console.error("Initialization failed", err);
       alert(err);
     }
-  };
+  }, [isInitialized]);
 
   useEffect(() => {
     if (!walletkit.current) return;

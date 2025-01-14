@@ -9,11 +9,17 @@ function App() {
   const [uri, setUri] = useState("");
 
   useEffect(() => {
+    console.log({ isInitialized, initialize });
+    if (isInitialized || !initialize) {
+      return;
+    }
     const storedAccountId = localStorage.getItem("accountId");
     const storedPrivateKey = localStorage.getItem("privateKey");
     if (!storedAccountId || !storedPrivateKey) return;
+    setPrivateKey(storedPrivateKey);
+    setAccountId(storedAccountId);
     initialize(storedAccountId, storedPrivateKey, "testnet");
-  }, []);
+  }, [initialize, isInitialized]);
 
   const initHandler = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
