@@ -1,4 +1,3 @@
-import { AccountId, Transaction } from "@hashgraph/sdk";
 import { ethers } from "ethers";
 
 /**
@@ -36,17 +35,4 @@ export function getSignTypedDataParamsData(params: string[]) {
   }
 
   return data;
-}
-
-/**
- * @param transaction - a base64 encoded string of proto.TransactionBody.encode().finish()
- * @returns `string`
- * */
-export function transactionToTransactionBody<T extends Transaction>(
-  transaction: T,
-  nodeAccountId?: AccountId,
-) {
-  // This is a private function, though provides the capabilities to construct a proto.TransactionBody
-  // @ts-expect-error - call Transaction private method
-  return transaction._makeTransactionBody(nodeAccountId)
 }

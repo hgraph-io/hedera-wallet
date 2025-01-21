@@ -7,8 +7,6 @@ import {
   Transaction,
   Query,
   PrecheckStatusError,
-  Status,
-  PublicKey,
 } from "@hashgraph/sdk";
 
 import {
@@ -39,7 +37,6 @@ import {
 } from "@walletconnect/jsonrpc-utils";
 
 import { RequestEventArgs } from "../types/common";
-import { transactionToTransactionBody } from "../utils/misc";
 
 interface IInitArgs {
   chainId: HederaChainId;
@@ -261,32 +258,6 @@ export class HIP820Wallet implements HIP820WalletInterface {
     }
     catch (e) {
       if (e instanceof PrecheckStatusError) {
-        
-        // Multi-node failover
-        if (e.status == Status.InvalidNodeAccount) {
-
-          // Check that only this wallet has signed the transaction to make sure it can be re-signed for multiple node ids
-          const walletPubKey = (this.wallet.getAccountKey() as PublicKey);
-          const signersPubKeys = [...signedTransaction._collectSignaturesByPublicKey().keys()];
-          if (signersPubKeys.length == 1 && signersPubKeys[0].equals(walletPubKey)) {
-
-            // Rebuild an unfrozen transaction list without nodes and signatures
-            const transactionBody = transactionToTransactionBody(signedTransaction);
-            const bodyBytes = proto.TransactionBody.encode(transactionBody).finish();
-            const transactionListBytes = proto.TransactionList.encode({
-              transactionList: [proto.Transaction.create({ bodyBytes })]
-            }).finish();
-            const rebuiltTx = Transaction.fromBytes(transactionListBytes)
-
-            // populate transaction with multiple nodeIds and sign transaction
-            const signedTx = await (
-              await rebuiltTx.freezeWithSigner(this.wallet)
-            ).signWithSigner(this.wallet);
-
-            // execute rebuilt transaction
-            return this.hedera_executeTransaction(id, signedTx);
-          }
-        }
         // HIP-820 error format
         return formatJsonRpcError(id, { code: 9000, message: e.message, data: e.status._code.toString() })
       }
