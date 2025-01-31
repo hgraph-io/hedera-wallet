@@ -83,33 +83,36 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
     console.log({ hip820Wallet });
   }, [hip820Wallet]);
 
-  const initialize = useCallback(async (
-    accountId: string,
-    privateKey: string,
-    network: "testnet" | "mainnet",
-  ) => {
-    if (isInitialized || walletkit.current) {
-      return;
-    }
-    console.trace("initialize wallets");
-    try {
-      setNetwork(network);
-      const eip155Wallet = EIP155Wallet.init({ privateKey });
-      const hip820Wallet = HIP820Wallet.init({
-        chainId: `hedera:${network}` as HederaChainId,
-        accountId,
-        privateKey,
-      });
-      setEip155Wallet(eip155Wallet);
-      setHip820Wallet(hip820Wallet);
-      walletkit.current = await createWalletKit();
+  const initialize = useCallback(
+    async (
+      accountId: string,
+      privateKey: string,
+      network: "testnet" | "mainnet",
+    ) => {
+      if (isInitialized || walletkit.current) {
+        return;
+      }
+      console.trace("initialize wallets");
+      try {
+        setNetwork(network);
+        const eip155Wallet = EIP155Wallet.init({ privateKey });
+        const hip820Wallet = HIP820Wallet.init({
+          chainId: `hedera:${network}` as HederaChainId,
+          accountId,
+          privateKey,
+        });
+        setEip155Wallet(eip155Wallet);
+        setHip820Wallet(hip820Wallet);
+        walletkit.current = await createWalletKit();
 
-      setInitialized(true);
-    } catch (err: unknown) {
-      console.error("Initialization failed", err);
-      alert(err);
-    }
-  }, [isInitialized]);
+        setInitialized(true);
+      } catch (err: unknown) {
+        console.error("Initialization failed", err);
+        alert(err);
+      }
+    },
+    [isInitialized],
+  );
 
   useEffect(() => {
     if (!walletkit.current) return;
@@ -267,7 +270,7 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
     if (!walletkit.current) {
       throw new Error("WalletKit not initialized");
     }
-    
+
     //https://docs.walletconnect.com/web3wallet/wallet-usage#session-disconnect
     for (const session of Object.values(
       walletkit.current.getActiveSessions(),

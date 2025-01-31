@@ -99,7 +99,11 @@ export class HIP820Wallet implements HIP820WalletInterface {
     const network = chainId.split(":")[1];
     const client = Client.forName(network);
     const provider = _provider ?? new Provider(client);
-    const wallet = new HederaWallet(accountId, PrivateKey.fromStringECDSA(privateKey), provider);
+    const wallet = new HederaWallet(
+      accountId,
+      PrivateKey.fromStringECDSA(privateKey),
+      provider,
+    );
     return new HIP820Wallet(wallet);
   }
 
@@ -252,17 +256,23 @@ export class HIP820Wallet implements HIP820WalletInterface {
   }
 
   // 2. hedera_executeTransaction
-  public async hedera_executeTransaction(id: number, signedTransaction: Transaction): Promise<ExecuteTransactionResult | JsonRpcError> {
+  public async hedera_executeTransaction(
+    id: number,
+    signedTransaction: Transaction,
+  ): Promise<ExecuteTransactionResult | JsonRpcError> {
     try {
       const response = await signedTransaction.executeWithSigner(this.wallet);
       return formatJsonRpcResult(id, response.toJSON());
-    }
-    catch (e) {
+    } catch (e) {
       if (e instanceof PrecheckStatusError) {
         // HIP-820 error format
-        return formatJsonRpcError(id, { code: 9000, message: e.message, data: e.status._code.toString() })
+        return formatJsonRpcError(id, {
+          code: 9000,
+          message: e.message,
+          data: e.status._code.toString(),
+        });
       }
-      return formatJsonRpcError(id, { code: 9000, message: "Unknown Error" })
+      return formatJsonRpcError(id, { code: 9000, message: "Unknown Error" });
     }
   }
   // 3. hedera_signMessage
@@ -291,7 +301,6 @@ export class HIP820Wallet implements HIP820WalletInterface {
      * https://github.com/hashgraph/hedera-sdk-js/blob/c4438cbaa38074d8bfc934dba84e3b430344ed89/src/account/AccountInfo.js#L402
      */
     try {
-
       const queryResult = await body.executeWithSigner(this.wallet);
       let queryResponse = "";
       if (Array.isArray(queryResult)) {
@@ -305,19 +314,25 @@ export class HIP820Wallet implements HIP820WalletInterface {
       return formatJsonRpcResult(id, {
         response: queryResponse,
       });
-    }
-    catch (e) {
+    } catch (e) {
       if (e instanceof PrecheckStatusError) {
         // HIP-820 error format
-        return formatJsonRpcError(id, { code: 9000, message: e.message, data: e.status._code.toString() })
+        return formatJsonRpcError(id, {
+          code: 9000,
+          message: e.message,
+          data: e.status._code.toString(),
+        });
       }
-      return formatJsonRpcError(id, { code: 9000, message: "Unknown Error" })
+      return formatJsonRpcError(id, { code: 9000, message: "Unknown Error" });
     }
   }
 
   // 5. hedera_signAndExecuteTransaction
-  public async hedera_signAndExecuteTransaction(id: number, transaction: Transaction) {
-    console.log({ inputTx: JSON.parse(JSON.stringify(transaction)) })
+  public async hedera_signAndExecuteTransaction(
+    id: number,
+    transaction: Transaction,
+  ) {
+    console.log({ inputTx: JSON.parse(JSON.stringify(transaction)) });
     // check transaction is incomplete (HIP-745)
     if (!transaction.isFrozen()) {
       // set multiple nodeAccountIds and transactionId if not present
@@ -327,17 +342,17 @@ export class HIP820Wallet implements HIP820WalletInterface {
     const signedTransaction = await transaction.signWithSigner(this.wallet);
     try {
       const response = await signedTransaction.executeWithSigner(this.wallet);
-      return formatJsonRpcResult(
-        id,
-        response.toJSON(),
-      );
-    }
-    catch (e) {
+      return formatJsonRpcResult(id, response.toJSON());
+    } catch (e) {
       if (e instanceof PrecheckStatusError) {
         // HIP-820 error format
-        return formatJsonRpcError(id, { code: 9000, message: e.message, data: e.status._code.toString() })
+        return formatJsonRpcError(id, {
+          code: 9000,
+          message: e.message,
+          data: e.status._code.toString(),
+        });
       }
-      return formatJsonRpcError(id, { code: 9000, message: "Unknown Error" })
+      return formatJsonRpcError(id, { code: 9000, message: "Unknown Error" });
     }
   }
 

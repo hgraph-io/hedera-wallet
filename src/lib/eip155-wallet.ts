@@ -94,11 +94,16 @@ export default class EIP155Wallet implements EIP155WalletInterface {
   eth_signTypedData_v4(domain: any, types: any, data: any): Promise<string> {
     return this.eth_signTypedData(domain, types, data);
   }
-  async eth_signTransaction(transaction: JsonRpcTransactionRequest, provider: JsonRpcProvider): Promise<string> {
+  async eth_signTransaction(
+    transaction: JsonRpcTransactionRequest,
+    provider: JsonRpcProvider,
+  ): Promise<string> {
     console.log({ transaction });
 
     // Populate transaction
-    const preparedTransaction = await this.connect(provider).populateTransaction(transaction as TransactionRequest);
+    const preparedTransaction = await this.connect(
+      provider,
+    ).populateTransaction(transaction as TransactionRequest);
     delete preparedTransaction.from;
     const txObj = Transaction.from(preparedTransaction);
 
@@ -108,7 +113,9 @@ export default class EIP155Wallet implements EIP155WalletInterface {
     transaction: JsonRpcTransactionRequest,
     provider: JsonRpcProvider,
   ): Promise<TransactionResponse> {
-    return this.connect(provider).sendTransaction(transaction as TransactionRequest);
+    return this.connect(provider).sendTransaction(
+      transaction as TransactionRequest,
+    );
   }
   eth_sendRawTransaction(
     rawTransaction: string,
@@ -208,7 +215,10 @@ export default class EIP155Wallet implements EIP155WalletInterface {
             EIP155_CHAINS[chainId as TEIP155Chain].rpc,
           );
           const signTransaction = request.params[0];
-          const signature = await this.eth_signTransaction(signTransaction, provider);
+          const signature = await this.eth_signTransaction(
+            signTransaction,
+            provider,
+          );
           return formatJsonRpcResult(id, signature);
         } catch (error) {
           console.error(error);
