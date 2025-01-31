@@ -7,6 +7,7 @@ import {
   Transaction,
   Query,
   PrecheckStatusError,
+  PrivateKey,
 } from "@hashgraph/sdk";
 
 import {
@@ -67,7 +68,7 @@ export interface HIP820WalletInterface {
   [HederaJsonRpcMethod.SignAndExecuteQuery](
     id: number,
     body: Query<any>,
-  ): Promise<SignAndExecuteQueryResult>;
+  ): Promise<SignAndExecuteQueryResult | JsonRpcError>;
   [HederaJsonRpcMethod.SignAndExecuteTransaction](
     id: number,
     body: Transaction,
@@ -98,7 +99,7 @@ export class HIP820Wallet implements HIP820WalletInterface {
     const network = chainId.split(":")[1];
     const client = Client.forName(network);
     const provider = _provider ?? new Provider(client);
-    const wallet = new HederaWallet(accountId, privateKey, provider);
+    const wallet = new HederaWallet(accountId, PrivateKey.fromStringECDSA(privateKey), provider);
     return new HIP820Wallet(wallet);
   }
 
@@ -289,19 +290,29 @@ export class HIP820Wallet implements HIP820WalletInterface {
      * For example:
      * https://github.com/hashgraph/hedera-sdk-js/blob/c4438cbaa38074d8bfc934dba84e3b430344ed89/src/account/AccountInfo.js#L402
      */
-    const queryResult = await body.executeWithSigner(this.wallet);
-    let queryResponse = "";
-    if (Array.isArray(queryResult)) {
-      queryResponse = queryResult
-        .map((qr) => Uint8ArrayToBase64String(qr.toBytes()))
-        .join(",");
-    } else {
-      queryResponse = Uint8ArrayToBase64String(queryResult.toBytes());
-    }
+    try {
 
-    return formatJsonRpcResult(id, {
-      response: queryResponse,
-    });
+      const queryResult = await body.executeWithSigner(this.wallet);
+      let queryResponse = "";
+      if (Array.isArray(queryResult)) {
+        queryResponse = queryResult
+          .map((qr) => Uint8ArrayToBase64String(qr.toBytes()))
+          .join(",");
+      } else {
+        queryResponse = Uint8ArrayToBase64String(queryResult.toBytes());
+      }
+
+      return formatJsonRpcResult(id, {
+        response: queryResponse,
+      });
+    }
+    catch (e) {
+      if (e instanceof PrecheckStatusError) {
+        // HIP-820 error format
+        return formatJsonRpcError(id, { code: 9000, message: e.message, data: e.status._code.toString() })
+      }
+      return formatJsonRpcError(id, { code: 9000, message: "Unknown Error" })
+    }
   }
 
   // 5. hedera_signAndExecuteTransaction

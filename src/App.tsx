@@ -81,7 +81,7 @@ function App() {
               />
             </label>
             <label>
-              Hedera Testnet Private Key:
+              Hedera Testnet ECDSA Hex Private Key:
               <input
                 type="password"
                 value={privateKey}

@@ -11,7 +11,7 @@ import {
   HederaJsonRpcMethod,
 } from "@hashgraph/hedera-wallet-connect";
 import { SignClientTypes } from "@walletconnect/types";
-import WalletKit, { IWalletKit } from "@reown/walletkit";
+import WalletKit from "@reown/walletkit";
 import { JsonRpcError, JsonRpcResult } from "@walletconnect/jsonrpc-utils";
 import { buildApprovedNamespaces, getSdkError } from "@walletconnect/utils";
 import { Core } from "@walletconnect/core";
@@ -54,10 +54,10 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
   const [isInitialized, setInitialized] = useState(false);
   const [eip155Wallet, setEip155Wallet] = useState<EIP155Wallet>();
   const [hip820Wallet, setHip820Wallet] = useState<HIP820Wallet>();
-  const walletkit = useRef<IWalletKit>();
+  const walletkit = useRef<WalletKit>();
   const [network, setNetwork] = useState<"testnet" | "mainnet">("testnet");
 
-  async function createWalletKit(): Promise<IWalletKit> {
+  async function createWalletKit(): Promise<WalletKit> {
     console.log("Creating WalletKit");
     const core = new Core({
       projectId: import.meta.env.VITE_REOWN_PROJECT_ID,
@@ -73,17 +73,7 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
       },
     });
 
-    try {
-      const clientId =
-        await walletkit.engine.signClient.core.crypto.getClientId();
-      console.log("WalletConnect ClientID: ", clientId);
-      return walletkit;
-    } catch (error) {
-      throw new Error(
-        "Failed to set WalletConnect clientId in localStorage: " +
-          (error instanceof Error ? error.message : error),
-      );
-    }
+    return walletkit;
   }
 
   useEffect(() => {
@@ -277,6 +267,7 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
     if (!walletkit.current) {
       throw new Error("WalletKit not initialized");
     }
+    
     //https://docs.walletconnect.com/web3wallet/wallet-usage#session-disconnect
     for (const session of Object.values(
       walletkit.current.getActiveSessions(),
@@ -295,6 +286,7 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
       });
     }
     setInitialized(false);
+    walletkit.current = undefined;
   }
 
   async function pair(uri: string) {
