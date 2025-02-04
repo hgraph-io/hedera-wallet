@@ -11,7 +11,7 @@ import {
   HederaJsonRpcMethod,
 } from "@hashgraph/hedera-wallet-connect";
 import { SignClientTypes } from "@walletconnect/types";
-import WalletKit, { IWalletKit } from "@reown/walletkit";
+import WalletKit from "@reown/walletkit";
 import { JsonRpcError, JsonRpcResult } from "@walletconnect/jsonrpc-utils";
 import { buildApprovedNamespaces, getSdkError } from "@walletconnect/utils";
 import { Core } from "@walletconnect/core";
@@ -54,10 +54,10 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
   const [isInitialized, setInitialized] = useState(false);
   const [eip155Wallet, setEip155Wallet] = useState<EIP155Wallet>();
   const [hip820Wallet, setHip820Wallet] = useState<HIP820Wallet>();
-  const walletkit = useRef<IWalletKit>();
+  const walletkit = useRef<WalletKit>();
   const [network, setNetwork] = useState<"testnet" | "mainnet">("testnet");
 
-  async function createWalletKit(): Promise<IWalletKit> {
+  async function createWalletKit(): Promise<WalletKit> {
     console.log("Creating WalletKit");
     const core = new Core({
       projectId: import.meta.env.VITE_REOWN_PROJECT_ID,
@@ -73,17 +73,7 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
       },
     });
 
-    try {
-      const clientId =
-        await walletkit.engine.signClient.core.crypto.getClientId();
-      console.log("WalletConnect ClientID: ", clientId);
-      return walletkit;
-    } catch (error) {
-      throw new Error(
-        "Failed to set WalletConnect clientId in localStorage: " +
-          (error instanceof Error ? error.message : error),
-      );
-    }
+    return walletkit;
   }
 
   useEffect(() => {
@@ -93,33 +83,36 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
     console.log({ hip820Wallet });
   }, [hip820Wallet]);
 
-  const initialize = useCallback(async (
-    accountId: string,
-    privateKey: string,
-    network: "testnet" | "mainnet",
-  ) => {
-    if (isInitialized || walletkit.current) {
-      return;
-    }
-    console.trace("initialize wallets");
-    try {
-      setNetwork(network);
-      const eip155Wallet = EIP155Wallet.init({ privateKey });
-      const hip820Wallet = HIP820Wallet.init({
-        chainId: `hedera:${network}` as HederaChainId,
-        accountId,
-        privateKey,
-      });
-      setEip155Wallet(eip155Wallet);
-      setHip820Wallet(hip820Wallet);
-      walletkit.current = await createWalletKit();
+  const initialize = useCallback(
+    async (
+      accountId: string,
+      privateKey: string,
+      network: "testnet" | "mainnet",
+    ) => {
+      if (isInitialized || walletkit.current) {
+        return;
+      }
+      console.trace("initialize wallets");
+      try {
+        setNetwork(network);
+        const eip155Wallet = EIP155Wallet.init({ privateKey });
+        const hip820Wallet = HIP820Wallet.init({
+          chainId: `hedera:${network}` as HederaChainId,
+          accountId,
+          privateKey,
+        });
+        setEip155Wallet(eip155Wallet);
+        setHip820Wallet(hip820Wallet);
+        walletkit.current = await createWalletKit();
 
-      setInitialized(true);
-    } catch (err: unknown) {
-      console.error("Initialization failed", err);
-      alert(err);
-    }
-  }, [isInitialized]);
+        setInitialized(true);
+      } catch (err: unknown) {
+        console.error("Initialization failed", err);
+        alert(err);
+      }
+    },
+    [isInitialized],
+  );
 
   useEffect(() => {
     if (!walletkit.current) return;
@@ -277,6 +270,7 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
     if (!walletkit.current) {
       throw new Error("WalletKit not initialized");
     }
+
     //https://docs.walletconnect.com/web3wallet/wallet-usage#session-disconnect
     for (const session of Object.values(
       walletkit.current.getActiveSessions(),
@@ -295,6 +289,7 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
       });
     }
     setInitialized(false);
+    walletkit.current = undefined;
   }
 
   async function pair(uri: string) {

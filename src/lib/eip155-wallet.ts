@@ -4,6 +4,8 @@ import {
   BaseWallet as BaseEvmWallet,
   TransactionRequest,
   TransactionResponse,
+  JsonRpcTransactionRequest,
+  Transaction,
 } from "ethers";
 
 import {
@@ -52,14 +54,15 @@ export interface EIP155WalletInterface {
     data: any,
   ): Promise<string>;
   [EIP155_METHODS.SignTransaction](
-    transaction: TransactionRequest,
+    transaction: JsonRpcTransactionRequest,
+    provider: JsonRpcProvider,
   ): Promise<string>;
   [EIP155_METHODS.SendTransaction](
-    transaction: TransactionRequest,
+    transaction: JsonRpcTransactionRequest,
     provider: JsonRpcProvider,
   ): Promise<TransactionResponse>;
   [EIP155_METHODS.SendRawTransaction](
-    transaction: TransactionRequest,
+    rawTransaction: string,
     provider: JsonRpcProvider,
   ): Promise<TransactionResponse>;
 }
@@ -91,20 +94,34 @@ export default class EIP155Wallet implements EIP155WalletInterface {
   eth_signTypedData_v4(domain: any, types: any, data: any): Promise<string> {
     return this.eth_signTypedData(domain, types, data);
   }
-  eth_signTransaction(transaction: TransactionRequest): Promise<string> {
-    return this.wallet.signTransaction(transaction);
+  async eth_signTransaction(
+    transaction: JsonRpcTransactionRequest,
+    provider: JsonRpcProvider,
+  ): Promise<string> {
+    console.log({ transaction });
+
+    // Populate transaction
+    const preparedTransaction = await this.connect(
+      provider,
+    ).populateTransaction(transaction as TransactionRequest);
+    delete preparedTransaction.from;
+    const txObj = Transaction.from(preparedTransaction);
+
+    return this.wallet.signTransaction(txObj);
   }
   eth_sendTransaction(
-    transaction: TransactionRequest,
+    transaction: JsonRpcTransactionRequest,
     provider: JsonRpcProvider,
   ): Promise<TransactionResponse> {
-    return this.connect(provider).sendTransaction(transaction);
+    return this.connect(provider).sendTransaction(
+      transaction as TransactionRequest,
+    );
   }
   eth_sendRawTransaction(
-    transaction: TransactionRequest,
+    rawTransaction: string,
     provider: JsonRpcProvider,
   ): Promise<TransactionResponse> {
-    return this.connect(provider).sendTransaction(transaction);
+    return provider.broadcastTransaction(rawTransaction);
   }
 
   static init({ privateKey }: IInitArgs) {
@@ -169,7 +186,7 @@ export default class EIP155Wallet implements EIP155WalletInterface {
             EIP155_CHAINS[chainId as TEIP155Chain].rpc,
           );
           const sendTransaction = request.params[0];
-          const txResponse = await this.eth_sendTransaction(
+          const txResponse = await this[request.method](
             sendTransaction,
             provider,
           );
@@ -194,8 +211,14 @@ export default class EIP155Wallet implements EIP155WalletInterface {
 
       case EIP155_METHODS.SignTransaction:
         try {
+          const provider = new JsonRpcProvider(
+            EIP155_CHAINS[chainId as TEIP155Chain].rpc,
+          );
           const signTransaction = request.params[0];
-          const signature = await this.eth_signTransaction(signTransaction);
+          const signature = await this.eth_signTransaction(
+            signTransaction,
+            provider,
+          );
           return formatJsonRpcResult(id, signature);
         } catch (error) {
           console.error(error);
