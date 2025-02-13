@@ -1,12 +1,10 @@
-import { HederaWalletContext } from "../store/hedera-wallet-provider";
-import { useContext } from "react";
+import { HederaWalletContext } from '../store/hedera-wallet-provider'
+import { useContext } from 'react'
 
 export default function useHederaWallet() {
-  const context = useContext(HederaWalletContext);
+  const context = useContext(HederaWalletContext)
   if (context === undefined) {
-    throw new Error(
-      "useHederaWallet must be used within a HederaWalletProvider",
-    );
+    throw new Error('useHederaWallet must be used within a HederaWalletProvider')
   }
-  return context;
+  return context
 }

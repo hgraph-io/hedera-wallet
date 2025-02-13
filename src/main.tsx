@@ -1,9 +1,9 @@
-import { createRoot } from "react-dom/client";
-import App from "./App";
-import HederaWalletProvider from "./store/hedera-wallet-provider";
+import { createRoot } from 'react-dom/client'
+import App from './App'
+import HederaWalletProvider from './store/hedera-wallet-provider'
 
-createRoot(document.getElementById("root")!).render(
+createRoot(document.getElementById('root')!).render(
   <HederaWalletProvider>
     <App />
   </HederaWalletProvider>,
-);
+)
