@@ -4,7 +4,8 @@ This is a simple Hedera wallet.
 
 ## Getting started
 
-1. Fill out the .env file with a <https://cloud.reown.com> project id.
+1. Fill out the .env file with a <https://cloud.reown.com> project id and Hedera rpc endpoints:
+   <https://docs.hedera.com/hedera/core-concepts/smart-contracts/json-rpc-relay>.
 
 ```sh
 ## copy and then update the .env file

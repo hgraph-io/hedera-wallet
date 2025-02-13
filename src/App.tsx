@@ -40,22 +40,22 @@ function App() {
         <img src="/hedera.svg" alt="Hedera" style={{ width: '90px', height: '90px' }} />
       </div>
 
-      <h1>WalletKit EIP-155 & HIP-820 Hedera Wallet Example</h1>
-      <h2>
-        This example demonstrates integrating both HIP-820 (Hedera Native Transactions) and
-        EIP-155 transactions utilizing the Hedera JSON-RPC relay
-      </h2>
+      <h1>Hedera Wallet Example</h1>
       <section>
         <p>
-          This demo requires a Hedera testnet account and a project ID from WalletKit. Visit{' '}
+          This example demonstrates integrating both HIP-820 (Hedera Native Transactions) and
+          EIP-155 transactions utilizing the Hedera JSON-RPC relay.
+        </p>
+        <p>
+          To get started, you'll need a{' '}
           <a target="_blank" href="https://portal.hedera.com">
-            Hedera Portal
+            Hedera testnet account{' '}
           </a>{' '}
-          or{' '}
+          and a project ID from{' '}
           <a target="_blank" href="https://cloud.reown.com">
-            Reown Cloud
-          </a>{' '}
-          for details.
+            Reown
+          </a>
+          .
         </p>
         <p>
           <b>Disclaimer:</b> Do not use your mainnet account or private key in this demo.
