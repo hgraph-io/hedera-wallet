@@ -1,14 +1,14 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers'
 
 /**
  * Converts hex to utf8 string if it is valid bytes
  */
 export function convertHexToUtf8(value: string) {
   if (ethers.isHexString(value)) {
-    return ethers.toUtf8String(value);
+    return ethers.toUtf8String(value)
   }
 
-  return value;
+  return value
 }
 
 /**
@@ -17,9 +17,9 @@ export function convertHexToUtf8(value: string) {
  * If it is a hex string, it gets converted to utf8 string
  */
 export function getSignParamsMessage(params: string[]) {
-  const message = params.filter((p) => !ethers.isAddress(p))[0];
+  const message = params.filter((p) => !ethers.isAddress(p))[0]
 
-  return convertHexToUtf8(message);
+  return convertHexToUtf8(message)
 }
 
 /**
@@ -28,11 +28,11 @@ export function getSignParamsMessage(params: string[]) {
  * If data is a string convert it to object
  */
 export function getSignTypedDataParamsData(params: string[]) {
-  const data = params.filter((p) => !ethers.isAddress(p))[0];
+  const data = params.filter((p) => !ethers.isAddress(p))[0]
 
-  if (typeof data === "string") {
-    return JSON.parse(data);
+  if (typeof data === 'string') {
+    return JSON.parse(data)
   }
 
-  return data;
+  return data
 }

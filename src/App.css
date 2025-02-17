@@ -23,8 +23,13 @@ body {
   margin: 0;
 }
 
+p,
+legend {
+  margin: 1rem 0;
+}
+
 a {
-  color: inherit;
+  /* color: inherit; */
   text-decoration: none;
 }
 
