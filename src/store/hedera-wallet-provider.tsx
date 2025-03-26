@@ -6,15 +6,19 @@ import {
   useEffect,
   useCallback,
 } from 'react'
-import { HederaChainId, HederaJsonRpcMethod } from '@hashgraph/hedera-wallet-connect'
+import {
+  HederaChainId,
+  HederaJsonRpcMethod,
+  HIP820Wallet,
+  EIP155Wallet,
+  Eip155JsonRpcMethod,
+  HederaChainDefinition,
+} from '@hashgraph/hedera-wallet-connect'
 import { SignClientTypes } from '@walletconnect/types'
 import WalletKit from '@reown/walletkit'
 import { JsonRpcError, JsonRpcResult } from '@walletconnect/jsonrpc-utils'
 import { buildApprovedNamespaces, getSdkError } from '@walletconnect/utils'
 import { Core } from '@walletconnect/core'
-import { EIP155_MAINNET_CHAINS, EIP155_METHODS, EIP155_TEST_CHAINS } from '../data/eip155'
-import EIP155Wallet from '../lib/eip155-wallet'
-import HIP820Wallet from '../lib/hip820-wallet'
 
 interface HederaWalletContextType {
   isInitialized: boolean
@@ -46,7 +50,7 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
   const [isInitialized, setInitialized] = useState(false)
   const [eip155Wallet, setEip155Wallet] = useState<EIP155Wallet>()
   const [hip820Wallet, setHip820Wallet] = useState<HIP820Wallet>()
-  const walletkit = useRef<WalletKit>()
+  const walletkit = useRef<WalletKit>(undefined)
   const [network, setNetwork] = useState<'testnet' | 'mainnet'>('testnet')
 
   async function createWalletKit(): Promise<WalletKit> {
@@ -127,10 +131,10 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
         })
       }
       try {
-        const eip155Chains = Object.keys(
-          network === 'testnet' ? EIP155_TEST_CHAINS : EIP155_MAINNET_CHAINS,
-        )
-        const eip155Methods = Object.values(EIP155_METHODS)
+        const { Testnet, Mainnet } = HederaChainDefinition.EVM
+
+        const eip155Network = network === 'testnet' ? Testnet : Mainnet
+        const eip155Methods = Object.values(Eip155JsonRpcMethod)
 
         const hip820Chains =
           network === 'testnet' ? [HederaChainId.Testnet] : [HederaChainId.Mainnet]
@@ -141,10 +145,10 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
           proposal: proposal.params,
           supportedNamespaces: {
             eip155: {
-              chains: eip155Chains,
+              chains: [eip155Network.caipNetworkId],
               methods: eip155Methods,
               events,
-              accounts: eip155Chains.map((chain) => `${chain}:${eip155Wallet.getEvmAddress()}`),
+              accounts: [`${eip155Network.caipNetworkId}:${eip155Wallet.getEvmAddress()}`],
             },
             hedera: {
               chains: hip820Chains,
@@ -186,7 +190,9 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
           throw new Error('HIP820Wallet not initialized')
         }
         const method = params.request.method
-        const isEIP155Method = Object.values(EIP155_METHODS).includes(method as EIP155_METHODS)
+        const isEIP155Method = Object.values(Eip155JsonRpcMethod).includes(
+          method as Eip155JsonRpcMethod,
+        )
 
         const isConfirm = window.confirm(
           `Do you want to proceed with this request?:\n${JSON.stringify(requestEvent)}`,
