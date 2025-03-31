@@ -559,10 +559,10 @@
     protobufjs "^7.2.5"
     yargs "^17.7.2"
 
-"@hashgraph/cryptography@1.5.0-beta.4":
-  version "1.5.0-beta.4"
-  resolved "https://registry.yarnpkg.com/@hashgraph/cryptography/-/cryptography-1.5.0-beta.4.tgz#4ae5283a5ca3657a7413ef8810f20c8fa756e783"
-  integrity sha512-Y9XsC3r1gT2sxf/YdxWOjf/fbC4D7V12oN2gMEo0RU2A1fl79zVL4aYMXPmVq93SjAZ2iAMkgeAlEcPxD0cLBA==
+"@hashgraph/cryptography@1.5.0-beta.5":
+  version "1.5.0-beta.5"
+  resolved "https://registry.yarnpkg.com/@hashgraph/cryptography/-/cryptography-1.5.0-beta.5.tgz#94e4ba5c45729dc483de1ebf9e70905d0bf79ef1"
+  integrity sha512-mXJqGGEJNZGKg2uRLZBjtt7ubDBRRweuVFhSBbfFbPyKlDrpm3h9GO9XyV3tFaYnfUaq5+tv5jXAqDWc2M6eTQ==
   dependencies:
     asn1js "^3.0.5"
     bignumber.js "^9.1.1"
@@ -599,17 +599,17 @@
     long "^5.2.3"
     protobufjs "7.2.5"
 
-"@hashgraph/sdk@^2.60.1":
-  version "2.60.1"
-  resolved "https://registry.yarnpkg.com/@hashgraph/sdk/-/sdk-2.60.1.tgz#c44916ade7f55cdfb293a238f5d42b0fc3584c05"
-  integrity sha512-85tthKpNz+/A7wMd8ajWjeHPlLe2S3HI08DemWBZeYGWXScNl7KG7u2k5qNJiG3L2YhiC/fre7W1xluZO8Z85A==
+"@hashgraph/sdk@^2.61.0":
+  version "2.61.0"
+  resolved "https://registry.yarnpkg.com/@hashgraph/sdk/-/sdk-2.61.0.tgz#71c1093920cd45dac1a72da6b92c648f78bbbdcf"
+  integrity sha512-VCEtdBe0PH3aQL/xhUZYnFfq8VElkjyRwNlYz3Z0BoHOYRRX7CWii/0WdhOZEqRfb9W7eh5Mjtm23lbrhmXmnA==
   dependencies:
     "@ethersproject/abi" "^5.7.0"
     "@ethersproject/bignumber" "^5.7.0"
     "@ethersproject/bytes" "^5.7.0"
     "@ethersproject/rlp" "^5.7.0"
     "@grpc/grpc-js" "^1.12.6"
-    "@hashgraph/cryptography" "1.5.0-beta.4"
+    "@hashgraph/cryptography" "1.5.0-beta.5"
     "@hashgraph/proto" "2.17.0-beta.1"
     bignumber.js "^9.1.1"
     bn.js "^5.1.1"
