@@ -107,10 +107,12 @@ function App() {
       <section>
         <button
           onClick={() => {
+            if (isInitialized) disconnect()
             localStorage.clear()
             sessionStorage.clear()
+            setAccountId('')
+            setPrivateKey('')
           }}
-          disabled={!isInitialized}
         >
           Clear Data
         </button>
