@@ -58,9 +58,9 @@ function App() {
         </p>
       </section>
       <section>
-        <form onSubmit={initHandler}>
+        <form onSubmit={isInitialized ? disconnect : initHandler}>
           <fieldset>
-            <legend>Step 1: Initialize Wallet</legend>
+            <legend>Step 1: Initialize WalletKit</legend>
             <label>
               Hedera Testnet Account Id:
               <input
@@ -82,17 +82,15 @@ function App() {
               />
             </label>
           </fieldset>
-          <button type="submit" disabled={isInitialized}>
-            {isInitialized ? 'Initialized' : 'Initialize WalletConnect'}
-          </button>
+          <button type="submit">{isInitialized ? 'Disconnect' : 'Initialize'}</button>
         </form>
       </section>
       <section>
         <form onSubmit={handlePairing}>
           <fieldset>
-            <legend>Step 3: Connect a dApp</legend>
+            <legend>Step 2: Connect an app</legend>
             <label>
-              dApp pairing string:
+              App pairing string:
               <input
                 type="text"
                 value={uri}
@@ -109,13 +107,12 @@ function App() {
       <section>
         <button
           onClick={() => {
-            disconnect()
             localStorage.clear()
             sessionStorage.clear()
           }}
           disabled={!isInitialized}
         >
-          Disconnect & Clear Data
+          Clear Data
         </button>
       </section>
     </div>
