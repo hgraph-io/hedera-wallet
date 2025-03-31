@@ -11,7 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@hashgraph/hedera-wallet-connect": "0.0.0-hg-531",
+    "@hashgraph/hedera-wallet-connect": "file:../hedera-wallet-connect",
     "@hashgraph/proto": "^2.16.0",
     "@hashgraph/sdk": "^2.60.1",
     "@reown/walletkit": "^1.2.2",
@@ -37,8 +37,5 @@
     "typescript-eslint": "^8.26.1",
     "vite": "^6.2.1",
     "vite-plugin-node-polyfills": "^0.23.0"
-  },
-  "resolutions": {
-    "@hashgraph/sdk": "2.60.1"
   }
 }

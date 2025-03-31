@@ -72,13 +72,6 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
     return walletkit
   }
 
-  useEffect(() => {
-    console.log({ eip155Wallet })
-  }, [eip155Wallet])
-  useEffect(() => {
-    console.log({ hip820Wallet })
-  }, [hip820Wallet])
-
   const initialize = useCallback(
     async (accountId: string, privateKey: string, network: 'testnet' | 'mainnet') => {
       if (isInitialized || walletkit.current) {
@@ -87,13 +80,13 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
       console.trace('initialize wallets')
       try {
         setNetwork(network)
-        const eip155Wallet = EIP155Wallet.init({ privateKey })
+        // const eip155Wallet = EIP155Wallet.init({ privateKey })
         const hip820Wallet = HIP820Wallet.init({
           chainId: `hedera:${network}` as HederaChainId,
           accountId,
           privateKey,
         })
-        setEip155Wallet(eip155Wallet)
+        // setEip155Wallet(eip155Wallet)
         setHip820Wallet(hip820Wallet)
         walletkit.current = await createWalletKit()
 
