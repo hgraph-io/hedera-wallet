@@ -8,18 +8,14 @@ function App() {
   const [privateKey, setPrivateKey] = useState('')
   const [uri, setUri] = useState('')
 
+  // get stored values from localStorage
   useEffect(() => {
-    console.log({ isInitialized, initialize })
-    if (isInitialized || !initialize) {
-      return
-    }
     const storedAccountId = localStorage.getItem('accountId')
     const storedPrivateKey = localStorage.getItem('privateKey')
     if (!storedAccountId || !storedPrivateKey) return
     setPrivateKey(storedPrivateKey)
     setAccountId(storedAccountId)
-    initialize(storedAccountId, storedPrivateKey, 'testnet')
-  }, [initialize, isInitialized])
+  }, [])
 
   const initHandler = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -43,8 +39,8 @@ function App() {
       <h1>Hedera Wallet Example</h1>
       <section>
         <p>
-          This example demonstrates integrating both HIP-820 (Hedera Native Transactions) and
-          EIP-155 transactions utilizing the Hedera JSON-RPC relay.
+          This example demonstrates integrating both Hedera Native Transactions and EVM JSON-RPC
+          transactions utilizing the Hedera JSON-RPC relay.
         </p>
         <p>
           To get started, you'll need a{' '}
@@ -62,13 +58,14 @@ function App() {
         </p>
       </section>
       <section>
-        <form onSubmit={initHandler}>
+        <form onSubmit={isInitialized ? disconnect : initHandler}>
           <fieldset>
-            <legend>Step 1: Initialize Wallet</legend>
+            <legend>Step 1: Initialize WalletKit</legend>
             <label>
               Hedera Testnet Account Id:
               <input
                 type="text"
+                autoComplete="username"
                 value={accountId}
                 onChange={(e) => setAccountId(e.target.value)}
                 required
@@ -78,23 +75,22 @@ function App() {
               Hedera Testnet ECDSA Hex Private Key:
               <input
                 type="password"
+                autoComplete="current-password"
                 value={privateKey}
                 onChange={(e) => setPrivateKey(e.target.value)}
                 required
               />
             </label>
           </fieldset>
-          <button type="submit" disabled={isInitialized}>
-            {isInitialized ? 'Initialized' : 'Initialize WalletConnect'}
-          </button>
+          <button type="submit">{isInitialized ? 'Disconnect' : 'Initialize'}</button>
         </form>
       </section>
       <section>
         <form onSubmit={handlePairing}>
           <fieldset>
-            <legend>Step 3: Connect a dApp</legend>
+            <legend>Step 2: Connect an app</legend>
             <label>
-              dApp pairing string:
+              App pairing string:
               <input
                 type="text"
                 value={uri}
@@ -111,13 +107,14 @@ function App() {
       <section>
         <button
           onClick={() => {
-            disconnect()
+            if (isInitialized) disconnect()
             localStorage.clear()
             sessionStorage.clear()
+            setAccountId('')
+            setPrivateKey('')
           }}
-          disabled={!isInitialized}
         >
-          Disconnect & Clear Data
+          Clear Data
         </button>
       </section>
     </div>

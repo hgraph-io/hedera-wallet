@@ -72,13 +72,6 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
     return walletkit
   }
 
-  useEffect(() => {
-    console.log({ eip155Wallet })
-  }, [eip155Wallet])
-  useEffect(() => {
-    console.log({ hip820Wallet })
-  }, [hip820Wallet])
-
   const initialize = useCallback(
     async (accountId: string, privateKey: string, network: 'testnet' | 'mainnet') => {
       if (isInitialized || walletkit.current) {
