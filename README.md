@@ -55,7 +55,7 @@ such as Wagmi, Viem, AppKit, and WalletKit.
 
 > [!WARNING]
 >
-> When using the EVM namespace Hedera accounts that have Ed25519 public/private key pairs are
+> When using the EVM namespace, Hedera accounts that have Ed25519 public/private key pairs are
 > not supported. See the docs for more information.
 >
 > - [Reown: Custom networks](https://docs.reown.com/appkit/react/core/custom-networks#1-adding-your-chain-to-viem%E2%80%99s-directory-recommended)
