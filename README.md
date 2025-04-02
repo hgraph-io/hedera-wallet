@@ -65,5 +65,5 @@ A strong reason to integrate Hedera via the native APIs is to fully support all 
 and native transaction types provided by Hedera.
 
 In the context of Reown's WalletKit and AppKit, this is defined by the namespaces requested by
-apps to wallets. For the EVM compatibility layer, the namespace is `eip155` and for Hedera
-native transactions it is `hedera`.
+apps to wallets. The namespace is `eip155` for the EVM compatibility layer and `hedera` for
+native integration.
