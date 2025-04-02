@@ -15,6 +15,7 @@ implementation see <https://github.com/hgraph-io/hedera-app>.
 >
 > - [Consensus Nodes](https://docs.hedera.com/hedera/networks/mainnet/mainnet-nodes)
 > - [Mirror Nodes](https://docs.hedera.com/hedera/core-concepts/mirror-nodes)
+> - [Hedera JSON-RPC Relay](https://github.com/hashgraph/hedera-json-rpc-relay/blob/main/docs/rpc-api.md)
 
 ## Getting started
 
@@ -44,8 +45,8 @@ users.
 
 Hedera supports the Ethereum JSON-RPC spec through a middle layer called the Hedera JSON-RPC
 Relay. This relay is responsible for translating Ethereum JSON-RPC compatible API calls into
-Hedera gRPC and REST API calls. To see a full list of supported methods, refer to
-<https://github.com/hashgraph/hedera-json-rpc-relay/blob/main/docs/rpc-api.md>
+Hedera gRPC and REST API calls. To see a full list of supported methods, refer to the JSON-RPC
+Relay documentation linked above.
 
 Apps and wallets that integrate Hedera can choose to use the Hedera JSON-RPC Relay to interact
 with the network, directly use Hedera APIs and SDKs, or do both. A strong reason to leverage the
