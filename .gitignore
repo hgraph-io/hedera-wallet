@@ -1,4 +1,8 @@
 .env
+
+# Claude Code files
+.claude/
+
 # Logs
 logs
 *.log

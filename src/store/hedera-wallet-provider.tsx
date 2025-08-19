@@ -14,6 +14,7 @@ import {
   Eip155JsonRpcMethod,
   HederaChainDefinition,
 } from '@hashgraph/hedera-wallet-connect'
+import { PrivateKey } from '@hashgraph/sdk'
 import { SignClientTypes } from '@walletconnect/types'
 import WalletKit from '@reown/walletkit'
 import { JsonRpcError, JsonRpcResult } from '@walletconnect/jsonrpc-utils'
@@ -23,9 +24,12 @@ import { Core } from '@walletconnect/core'
 interface HederaWalletContextType {
   isInitialized: boolean
   initialize: (
-    accountId: string,
-    privateKey: string,
+    ecdsaAccountId: string,
+    ecdsaPrivateKey: string,
+    ed25519AccountId: string,
+    ed25519PrivateKey: string,
     network: 'testnet' | 'mainnet',
+    projectId: string,
   ) => Promise<void>
   eip155Wallet?: EIP155Wallet
   hip820Wallet?: HIP820Wallet
@@ -53,10 +57,10 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
   const walletkit = useRef<WalletKit>(undefined)
   const [network, setNetwork] = useState<'testnet' | 'mainnet'>('testnet')
 
-  async function createWalletKit(): Promise<WalletKit> {
+  async function createWalletKit(projectId: string): Promise<WalletKit> {
     console.log('Creating WalletKit')
     const core = new Core({
-      projectId: import.meta.env.VITE_REOWN_PROJECT_ID,
+      projectId,
       logger: 'error',
     })
     const walletkit = await WalletKit.init({
@@ -73,22 +77,49 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
   }
 
   const initialize = useCallback(
-    async (accountId: string, privateKey: string, network: 'testnet' | 'mainnet') => {
+    async (
+      ecdsaAccountId: string,
+      ecdsaPrivateKey: string,
+      ed25519AccountId: string,
+      ed25519PrivateKey: string,
+      network: 'testnet' | 'mainnet',
+      projectId: string,
+    ) => {
       if (isInitialized || walletkit.current) {
         return
       }
       console.trace('initialize wallets')
       try {
         setNetwork(network)
-        const eip155Wallet = EIP155Wallet.init({ privateKey })
+        
+        // Always initialize EIP155 wallet with ECDSA key for EVM compatibility
+        const eip155Wallet = EIP155Wallet.init({ privateKey: ecdsaPrivateKey })
+        
+        // For HIP820 wallet, prefer Ed25519 if provided, otherwise use ECDSA
+        let hip820PrivateKey: PrivateKey
+        let hip820AccountId: string
+        
+        if (ed25519PrivateKey && ed25519AccountId) {
+          // Use Ed25519 account for native Hedera operations
+          hip820PrivateKey = PrivateKey.fromStringED25519(ed25519PrivateKey)
+          hip820AccountId = ed25519AccountId
+          console.log('Using Ed25519 account for HIP820 wallet:', ed25519AccountId)
+        } else {
+          // Fall back to ECDSA account
+          hip820PrivateKey = PrivateKey.fromStringECDSA(ecdsaPrivateKey)
+          hip820AccountId = ecdsaAccountId
+          console.log('Using ECDSA account for HIP820 wallet:', ecdsaAccountId)
+        }
+        
         const hip820Wallet = HIP820Wallet.init({
           chainId: `hedera:${network}` as HederaChainId,
-          accountId,
-          privateKey,
+          accountId: hip820AccountId,
+          privateKey: hip820PrivateKey,
         })
+        
         setEip155Wallet(eip155Wallet)
         setHip820Wallet(hip820Wallet)
-        walletkit.current = await createWalletKit()
+        walletkit.current = await createWalletKit(projectId)
 
         setInitialized(true)
       } catch (err: unknown) {

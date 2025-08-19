@@ -11,7 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@hashgraph/hedera-wallet-connect": "^2.0.1-canary.b1d8954.0",
+    "@hashgraph/hedera-wallet-connect": "file:../../hedera-wallet-connect",
     "@hashgraph/sdk": "^2.61.0",
     "@reown/walletkit": "^1.2.3",
     "@walletconnect/core": "^2.19.2",
