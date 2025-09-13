@@ -109,6 +109,16 @@ export default function AccountSelectionModal({
                   </div>
                 )}
                 <div>Type: {account.type}</div>
+                {account.type === 'ECDSA' && account.namespace === 'eip155' && (
+                  <div style={{ color: '#28a745', fontWeight: 500 }}>
+                    ✓ Includes Hedera namespace
+                  </div>
+                )}
+                {account.type === 'ECDSA' && account.namespace === 'hedera' && (
+                  <div style={{ color: '#28a745', fontWeight: 500 }}>
+                    ✓ Includes EIP155 namespace
+                  </div>
+                )}
               </div>
             </div>
           </label>
@@ -145,12 +155,12 @@ export default function AccountSelectionModal({
         {renderAccountGroup(
           eip155Accounts,
           'EIP155 Namespace',
-          'EVM-compatible accounts for Ethereum-style interactions',
+          'EVM-compatible accounts (ECDSA accounts will also enable Hedera namespace)',
         )}
         {renderAccountGroup(
           hederaAccounts,
           'Hedera Namespace',
-          'Native Hedera accounts for direct network interactions',
+          'Native Hedera accounts (ECDSA accounts will also enable EIP155 namespace)',
         )}
       </div>
 

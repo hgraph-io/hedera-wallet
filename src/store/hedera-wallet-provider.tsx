@@ -59,6 +59,7 @@ interface HederaWalletContextType {
     onReject?: () => void
     hideButtons?: boolean
   }
+  getSessions: () => any[]
 }
 
 const initialState: HederaWalletContextType = {
@@ -81,6 +82,7 @@ const initialState: HederaWalletContextType = {
     content: null,
     type: 'info',
   },
+  getSessions: () => [],
 }
 
 const HederaWalletContext = createContext<HederaWalletContextType>(initialState)
@@ -311,11 +313,22 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
 
           // Build namespaces based on selected account
           if (selectedAccount.namespace === 'eip155') {
+            // For ECDSA accounts connecting via EIP155, also include Hedera namespace
             supportedNamespaces.eip155 = {
               chains: [eip155Network.caipNetworkId],
               methods: Object.values(Eip155JsonRpcMethod),
               events,
               accounts: [`${eip155Network.caipNetworkId}:${selectedAccount.address}`],
+            }
+
+            // ECDSA accounts can also support Hedera namespace
+            if (selectedAccount.type === 'ECDSA') {
+              supportedNamespaces.hedera = {
+                chains: hip820Chains,
+                methods: Object.values(HederaJsonRpcMethod),
+                events,
+                accounts: hip820Chains.map((chain) => `${chain}:${selectedAccount.id}`),
+              }
             }
           } else if (selectedAccount.namespace === 'hedera') {
             supportedNamespaces.hedera = {
@@ -323,6 +336,16 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
               methods: Object.values(HederaJsonRpcMethod),
               events,
               accounts: hip820Chains.map((chain) => `${chain}:${selectedAccount.id}`),
+            }
+
+            // If it's an ECDSA account, also include EIP155 namespace
+            if (selectedAccount.type === 'ECDSA' && eip155Wallet) {
+              supportedNamespaces.eip155 = {
+                chains: [eip155Network.caipNetworkId],
+                methods: Object.values(Eip155JsonRpcMethod),
+                events,
+                accounts: [`${eip155Network.caipNetworkId}:${eip155Wallet.getEvmAddress()}`],
+              }
             }
           }
 
@@ -524,6 +547,13 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
     await walletkit.current.core.pairing.pair({ uri })
   }
 
+  function getSessions() {
+    if (!walletkit.current) {
+      return []
+    }
+    return Object.values(walletkit.current.getActiveSessions())
+  }
+
   const value = {
     isInitialized,
     isLocked,
@@ -541,6 +571,7 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
     ed25519EvmAddress,
     ed25519EvmAddressSource,
     modal,
+    getSessions,
   }
 
   return (

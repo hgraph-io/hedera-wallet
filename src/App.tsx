@@ -19,6 +19,7 @@ function App() {
     ed25519AccountId,
     ed25519EvmAddress,
     ed25519EvmAddressSource,
+    getSessions,
   } = useHederaWallet()
   const [ecdsaAccountIdInput, setEcdsaAccountIdInput] = useState('')
   const [ecdsaPrivateKeyInput, setEcdsaPrivateKeyInput] = useState('')
@@ -30,6 +31,7 @@ function App() {
   const [uri, setUri] = useState('')
   const [isAutoInitializing, setIsAutoInitializing] = useState(false)
   const [unlockError, setUnlockError] = useState('')
+  const [sessions, setSessions] = useState<any[]>([])
 
   // Check for stored credentials and auto-unlock attempt
   useEffect(() => {
@@ -45,6 +47,27 @@ function App() {
       setIsAutoInitializing(false)
     }
   }, [hasStoredCredentials, isLocked])
+
+  // Refresh sessions list periodically
+  useEffect(() => {
+    if (!isInitialized || isLocked) {
+      setSessions([])
+      return
+    }
+
+    const updateSessions = () => {
+      const activeSessions = getSessions()
+      setSessions(activeSessions)
+    }
+
+    // Update immediately
+    updateSessions()
+
+    // Update every 2 seconds
+    const interval = setInterval(updateSessions, 2000)
+
+    return () => clearInterval(interval)
+  }, [isInitialized, isLocked, getSessions])
 
   const initHandler = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -421,13 +444,65 @@ function App() {
         </section>
       )}
 
-      <section>
-        <button onClick={handleClearData}>Clear All Data</button>
-        {isInitialized && (
-          <button onClick={disconnect} style={{ marginLeft: '10px' }}>
-            Disconnect Sessions
-          </button>
+      <section
+        style={{
+          padding: '20px',
+          backgroundColor: '#f5f5f5',
+          borderRadius: '8px',
+          marginTop: '20px',
+        }}
+      >
+        <h3 style={{ marginTop: 0, marginBottom: '15px' }}>Active Sessions</h3>
+        {sessions.length > 0 ? (
+          <div
+            style={{
+              maxHeight: '200px',
+              overflowY: 'auto',
+              marginBottom: '15px',
+              backgroundColor: 'white',
+              padding: '10px',
+              borderRadius: '5px',
+              border: '1px solid #ddd',
+            }}
+          >
+            {sessions.map((session, index) => (
+              <div
+                key={session.topic}
+                style={{
+                  padding: '10px',
+                  borderBottom: index < sessions.length - 1 ? '1px solid #eee' : 'none',
+                }}
+              >
+                <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+                  {session.peer?.metadata?.name || 'Unknown App'}
+                </div>
+                <div style={{ fontSize: '12px', color: '#666' }}>
+                  <div>URL: {session.peer?.metadata?.url || 'N/A'}</div>
+                  <div>Topic: {session.topic.substring(0, 20)}...</div>
+                  <div>Namespaces: {Object.keys(session.namespaces).join(', ')}</div>
+                  <div>Expiry: {new Date(session.expiry * 1000).toLocaleString()}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div
+            style={{
+              padding: '20px',
+              textAlign: 'center',
+              color: '#999',
+              backgroundColor: 'white',
+              borderRadius: '5px',
+              marginBottom: '15px',
+            }}
+          >
+            No active sessions
+          </div>
         )}
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button onClick={handleClearData}>Clear All Data</button>
+          {isInitialized && <button onClick={disconnect}>Disconnect Sessions</button>}
+        </div>
       </section>
     </div>
   )
