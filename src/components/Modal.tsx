@@ -8,6 +8,7 @@ interface ModalProps {
   title: string
   children: ReactNode
   type?: 'confirm' | 'error' | 'info'
+  hideButtons?: boolean
 }
 
 export default function Modal({
@@ -18,6 +19,7 @@ export default function Modal({
   title,
   children,
   type = 'info',
+  hideButtons = false,
 }: ModalProps) {
   if (!isOpen) return null
 
@@ -86,94 +88,96 @@ export default function Modal({
 
         <div style={{ marginBottom: '20px' }}>{children}</div>
 
-        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-          {type === 'confirm' && (
-            <>
+        {!hideButtons && (
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            {type === 'confirm' && (
+              <>
+                <button
+                  onClick={onReject}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '4px',
+                    border: '1px solid #dc3545',
+                    backgroundColor: 'white',
+                    color: '#dc3545',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#dc3545'
+                    e.currentTarget.style.color = 'white'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'white'
+                    e.currentTarget.style.color = '#dc3545'
+                  }}
+                >
+                  Reject
+                </button>
+                <button
+                  onClick={onConfirm}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '4px',
+                    border: 'none',
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    transition: 'background-color 0.2s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#218838')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#28a745')}
+                >
+                  Approve
+                </button>
+              </>
+            )}
+            {type === 'error' && (
               <button
-                onClick={onReject}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: '4px',
-                  border: '1px solid #dc3545',
-                  backgroundColor: 'white',
-                  color: '#dc3545',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#dc3545'
-                  e.currentTarget.style.color = 'white'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'white'
-                  e.currentTarget.style.color = '#dc3545'
-                }}
-              >
-                Reject
-              </button>
-              <button
-                onClick={onConfirm}
+                onClick={onClose}
                 style={{
                   padding: '8px 16px',
                   borderRadius: '4px',
                   border: 'none',
-                  backgroundColor: '#28a745',
+                  backgroundColor: '#dc3545',
                   color: 'white',
                   cursor: 'pointer',
                   fontSize: '14px',
                   fontWeight: 500,
                   transition: 'background-color 0.2s',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#218838')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#28a745')}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#c82333')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#dc3545')}
               >
-                Approve
+                Close
               </button>
-            </>
-          )}
-          {type === 'error' && (
-            <button
-              onClick={onClose}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '4px',
-                border: 'none',
-                backgroundColor: '#dc3545',
-                color: 'white',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 500,
-                transition: 'background-color 0.2s',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#c82333')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#dc3545')}
-            >
-              Close
-            </button>
-          )}
-          {type === 'info' && (
-            <button
-              onClick={onClose}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '4px',
-                border: 'none',
-                backgroundColor: '#007bff',
-                color: 'white',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 500,
-                transition: 'background-color 0.2s',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#0056b3')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#007bff')}
-            >
-              OK
-            </button>
-          )}
-        </div>
+            )}
+            {type === 'info' && (
+              <button
+                onClick={onClose}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '4px',
+                  border: 'none',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  transition: 'background-color 0.2s',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#0056b3')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#007bff')}
+              >
+                OK
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

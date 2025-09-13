@@ -23,6 +23,7 @@ import { Core } from '@walletconnect/core'
 import { CryptoUtils } from '../utils/crypto'
 import Modal from '../components/Modal'
 import PayloadDisplay from '../components/PayloadDisplay'
+import AccountSelectionModal from '../components/AccountSelectionModal'
 import { getEd25519EvmAddress } from '../utils/hedera'
 
 interface HederaWalletContextType {
@@ -56,6 +57,7 @@ interface HederaWalletContextType {
     type: 'confirm' | 'error' | 'info'
     onConfirm?: () => void
     onReject?: () => void
+    hideButtons?: boolean
   }
 }
 
@@ -112,6 +114,7 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
     type: 'confirm' | 'error' | 'info' = 'info',
     onConfirm?: () => void,
     onReject?: () => void,
+    hideButtons?: boolean,
   ) => {
     setModal({
       isOpen: true,
@@ -120,6 +123,7 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
       type,
       onConfirm,
       onReject,
+      hideButtons,
     })
   }
 
@@ -295,37 +299,36 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
         throw new Error('HIP820Wallet not initialized')
       }
 
-      const processSessionProposal = async () => {
+      const processSessionProposal = async (selectedAccount: any) => {
         try {
           const { Testnet, Mainnet } = HederaChainDefinition.EVM
-
           const eip155Network = network === 'testnet' ? Testnet : Mainnet
-          const eip155Methods = Object.values(Eip155JsonRpcMethod)
-
           const hip820Chains =
             network === 'testnet' ? [HederaChainId.Testnet] : [HederaChainId.Mainnet]
-          const hip820Methods = Object.values(HederaJsonRpcMethod)
           const events = ['accountsChanged', 'chainChanged']
+
+          let supportedNamespaces: any = {}
+
+          // Build namespaces based on selected account
+          if (selectedAccount.namespace === 'eip155') {
+            supportedNamespaces.eip155 = {
+              chains: [eip155Network.caipNetworkId],
+              methods: Object.values(Eip155JsonRpcMethod),
+              events,
+              accounts: [`${eip155Network.caipNetworkId}:${selectedAccount.address}`],
+            }
+          } else if (selectedAccount.namespace === 'hedera') {
+            supportedNamespaces.hedera = {
+              chains: hip820Chains,
+              methods: Object.values(HederaJsonRpcMethod),
+              events,
+              accounts: hip820Chains.map((chain) => `${chain}:${selectedAccount.id}`),
+            }
+          }
 
           const params = {
             proposal: proposal.params,
-            supportedNamespaces: {
-              eip155: {
-                chains: [eip155Network.caipNetworkId],
-                methods: eip155Methods,
-                events,
-                accounts: [`${eip155Network.caipNetworkId}:${eip155Wallet.getEvmAddress()}`],
-              },
-              hedera: {
-                chains: hip820Chains,
-                methods: hip820Methods,
-                events,
-                accounts: hip820Chains.map(
-                  (chain) =>
-                    `${chain}:${hip820Wallet.getHederaWallet().getAccountId().toString()}`,
-                ),
-              },
-            },
+            supportedNamespaces,
           }
           const approvedNamespaces = buildApprovedNamespaces(params)
           console.log({ params, approvedNamespaces })
@@ -342,9 +345,9 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
         }
       }
 
-      const handleApprove = async () => {
+      const handleSelectAccount = async (selectedAccount: any) => {
         closeModal()
-        await processSessionProposal()
+        await processSessionProposal(selectedAccount)
       }
 
       const handleReject = async () => {
@@ -355,15 +358,54 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
         })
       }
 
+      // Prepare available accounts
+      const availableAccounts = []
+
+      // Add ECDSA account for EIP155 namespace
+      if (ecdsaAccountId && eip155Wallet) {
+        availableAccounts.push({
+          id: ecdsaAccountId,
+          address: eip155Wallet.getEvmAddress(),
+          type: 'ECDSA',
+          namespace: 'eip155',
+        })
+      }
+
+      // Add Ed25519 account for Hedera namespace
+      if (ed25519AccountId && hip820Wallet) {
+        availableAccounts.push({
+          id: ed25519AccountId,
+          address: ed25519EvmAddress || '',
+          type: 'Ed25519',
+          namespace: 'hedera',
+        })
+      }
+
+      // If ECDSA account can also be used with Hedera namespace
+      if (ecdsaAccountId && hip820Wallet) {
+        availableAccounts.push({
+          id: ecdsaAccountId,
+          address: eip155Wallet?.getEvmAddress() || '',
+          type: 'ECDSA',
+          namespace: 'hedera',
+        })
+      }
+
+      const dappMetadata = proposal.params.proposer.metadata
+
       showModal(
-        'Session Connection Request',
-        <div>
-          <p style={{ marginBottom: '15px' }}>A dApp wants to connect to your wallet:</p>
-          <PayloadDisplay payload={proposal} />
-        </div>,
-        'confirm',
-        handleApprove,
-        handleReject,
+        'Connect Account',
+        <AccountSelectionModal
+          accounts={availableAccounts}
+          onSelectAccount={handleSelectAccount}
+          onCancel={handleReject}
+          dappName={dappMetadata?.name}
+          dappUrl={dappMetadata?.url}
+        />,
+        'info',
+        undefined,
+        undefined,
+        true, // hideButtons since AccountSelectionModal has its own
       )
     }
 
@@ -511,6 +553,7 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
         onReject={modal.onReject}
         title={modal.title}
         type={modal.type}
+        hideButtons={modal.hideButtons}
       >
         {modal.content}
       </Modal>
