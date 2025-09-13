@@ -10,9 +10,7 @@ const __dirname = dirname(__filename)
 console.log(__dirname)
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    react(),
-  ],
+  plugins: [react()],
   resolve: {
     alias: {
       'vite-plugin-node-polyfills/shims/buffer': resolve(
