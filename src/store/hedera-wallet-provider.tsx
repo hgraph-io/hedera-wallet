@@ -95,6 +95,7 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
   const [hasStoredCredentials, setHasStoredCredentials] = useState(false)
   const [eip155Wallet, setEip155Wallet] = useState<EIP155Wallet>()
   const [hip820Wallet, setHip820Wallet] = useState<HIP820Wallet>()
+  const [hip820WalletEcdsa, setHip820WalletEcdsa] = useState<HIP820Wallet>()
   const walletkit = useRef<WalletKit>(undefined)
   const [network, setNetwork] = useState<'testnet' | 'mainnet'>('testnet')
   const [ecdsaAccountId, setEcdsaAccountId] = useState<string>('')
@@ -213,8 +214,20 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
           privateKey: hip820PrivateKey as any,
         })
 
+        // Initialize HIP820 wallet with ECDSA key for ECDSA-based Hedera operations
+        // This is needed when EIP155 accounts use hedera_signTransactions
+        const hip820PrivateKeyEcdsa = PrivateKey.fromStringECDSA(ecdsaPrivateKey)
+        console.log('Using ECDSA account for HIP820 wallet (ECDSA):', ecdsaAccountId)
+
+        const hip820WalletEcdsa = HIP820Wallet.init({
+          chainId: `hedera:${network}` as HederaChainId,
+          accountId: ecdsaAccountId,
+          privateKey: hip820PrivateKeyEcdsa as any,
+        })
+
         setEip155Wallet(eip155Wallet)
         setHip820Wallet(hip820Wallet)
+        setHip820WalletEcdsa(hip820WalletEcdsa)
         setEcdsaAccountId(ecdsaAccountId)
         setEd25519AccountId(ed25519AccountId)
 
@@ -274,6 +287,7 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
   const lock = useCallback(() => {
     setEip155Wallet(undefined)
     setHip820Wallet(undefined)
+    setHip820WalletEcdsa(undefined)
     if (walletkit.current) {
       walletkit.current = undefined
     }
@@ -355,7 +369,7 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
           }
           const approvedNamespaces = buildApprovedNamespaces(params)
           console.log({ params, approvedNamespaces })
-          await walletkit.current.approveSession({
+          await walletkit.current!.approveSession({
             id: proposal.id,
             namespaces: approvedNamespaces,
           })
@@ -375,7 +389,7 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
 
       const handleReject = async () => {
         closeModal()
-        await walletkit.current.rejectSession({
+        await walletkit.current!.rejectSession({
           id: proposal.id,
           reason: getSdkError('USER_REJECTED_METHODS'),
         })
@@ -389,8 +403,8 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
         availableAccounts.push({
           id: ecdsaAccountId,
           address: eip155Wallet.getEvmAddress(),
-          type: 'ECDSA',
-          namespace: 'eip155',
+          type: 'ECDSA' as const,
+          namespace: 'eip155' as const,
         })
       }
 
@@ -399,8 +413,8 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
         availableAccounts.push({
           id: ed25519AccountId,
           address: ed25519EvmAddress || '',
-          type: 'Ed25519',
-          namespace: 'hedera',
+          type: 'Ed25519' as const,
+          namespace: 'hedera' as const,
         })
       }
 
@@ -409,8 +423,8 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
         availableAccounts.push({
           id: ecdsaAccountId,
           address: eip155Wallet?.getEvmAddress() || '',
-          type: 'ECDSA',
-          namespace: 'hedera',
+          type: 'ECDSA' as const,
+          namespace: 'hedera' as const,
         })
       }
 
@@ -449,24 +463,52 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
         if (!hip820Wallet) {
           throw new Error('HIP820Wallet not initialized')
         }
+        if (!hip820WalletEcdsa) {
+          throw new Error('HIP820WalletEcdsa not initialized')
+        }
+
         const method = params.request.method
         const isEIP155Method = Object.values(Eip155JsonRpcMethod).includes(
           method as Eip155JsonRpcMethod,
         )
 
+        // Determine which HIP820 wallet to use based on the session's account
+        const getHip820Wallet = () => {
+          const session = walletkit.current?.getActiveSessions()[topic]
+          if (!session) return hip820Wallet // fallback to Ed25519 wallet
+          
+          // Check if session has hedera namespace with ECDSA account
+          const hederaAccounts = session.namespaces?.hedera?.accounts || []
+          const hederaAccountId = hederaAccounts[0]?.split(':').pop() // Extract account ID
+          
+          // If the session's Hedera account matches the ECDSA account, use ECDSA wallet
+          if (hederaAccountId === ecdsaAccountId) {
+            console.log('Using ECDSA HIP820 wallet for account:', ecdsaAccountId)
+            return hip820WalletEcdsa
+          }
+          
+          // Otherwise use Ed25519 wallet
+          console.log('Using Ed25519 HIP820 wallet for account:', ed25519AccountId)
+          return hip820Wallet
+        }
+
         const processRequest = async (isConfirm: boolean) => {
           let response: JsonRpcResult<string> | JsonRpcError
           if (isConfirm) {
-            response = isEIP155Method
-              ? await eip155Wallet.approveSessionRequest(requestEvent)
-              : await hip820Wallet.approveSessionRequest(requestEvent)
+            if (isEIP155Method) {
+              response = await eip155Wallet.approveSessionRequest(requestEvent)
+            } else {
+              // Use the appropriate HIP820 wallet based on session account
+              const selectedHip820Wallet = getHip820Wallet()
+              response = await selectedHip820Wallet.approveSessionRequest(requestEvent)
+            }
           } else {
             response = isEIP155Method
               ? eip155Wallet.rejectSessionRequest(requestEvent)
               : hip820Wallet.rejectSessionRequest(requestEvent)
           }
 
-          await walletkit.current.respondSessionRequest({
+          await walletkit.current!.respondSessionRequest({
             topic,
             response,
           })
@@ -512,7 +554,15 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
       console.log(`Wallet: Pairing deleted by dapp!`)
       // clean up after the pairing for `topic` was deleted.
     })
-  }, [eip155Wallet, hip820Wallet, network, isInitialized])
+  }, [
+    eip155Wallet,
+    hip820Wallet,
+    hip820WalletEcdsa,
+    network,
+    isInitialized,
+    ecdsaAccountId,
+    ed25519AccountId,
+  ])
 
   async function disconnect() {
     console.log('Disconnecting from WalletConnect')
