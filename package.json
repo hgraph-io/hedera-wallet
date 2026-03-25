@@ -12,11 +12,11 @@
   },
   "dependencies": {
     "@hashgraph/hedera-wallet-connect": "file:../hedera-wallet-connect",
-    "@hashgraph/sdk": "^2.69.0",
-    "@reown/walletkit": "^1.2.3",
-    "@walletconnect/core": "^2.19.2",
+    "@hiero-ledger/sdk": "2.79.0",
+    "@reown/walletkit": "^1.2.8",
+    "@walletconnect/core": "^2.21.4",
     "@walletconnect/jsonrpc-utils": "^1.0.8",
-    "@walletconnect/utils": "^2.19.2",
+    "@walletconnect/utils": "^2.21.4",
     "ethers": "^6.13.5",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"

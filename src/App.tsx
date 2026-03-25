@@ -13,7 +13,6 @@ function App() {
     pair,
     disconnect,
     eip155Wallet,
-    hip820Wallet,
     network,
     ecdsaAccountId,
     ed25519AccountId,

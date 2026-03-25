@@ -1,4 +1,4 @@
-import { AccountId } from '@hashgraph/sdk'
+import { AccountId } from '@hiero-ledger/sdk'
 
 interface MirrorNodeAccountResponse {
   account: string

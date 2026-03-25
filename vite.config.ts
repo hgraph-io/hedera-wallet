@@ -13,6 +13,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
+      // Deduplicate @hiero-ledger/sdk so the app and HWC share one copy
+      '@hiero-ledger/sdk': resolve(__dirname, '..', 'hedera-wallet-connect', 'node_modules', '@hiero-ledger', 'sdk'),
       'vite-plugin-node-polyfills/shims/buffer': resolve(
         __dirname,
         'node_modules',

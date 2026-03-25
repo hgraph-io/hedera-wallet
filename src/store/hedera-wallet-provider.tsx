@@ -14,7 +14,7 @@ import {
   Eip155JsonRpcMethod,
   HederaChainDefinition,
 } from '@hashgraph/hedera-wallet-connect'
-import { PrivateKey } from '@hashgraph/sdk'
+import { PrivateKey } from '@hiero-ledger/sdk'
 import { SignClientTypes } from '@walletconnect/types'
 import WalletKit from '@reown/walletkit'
 import { JsonRpcError, JsonRpcResult } from '@walletconnect/jsonrpc-utils'
@@ -323,6 +323,7 @@ export default function HederaWalletProvider({ children }: HederaWalletProps) {
             network === 'testnet' ? [HederaChainId.Testnet] : [HederaChainId.Mainnet]
           const events = ['accountsChanged', 'chainChanged']
 
+          // eslint-disable-next-line prefer-const
           let supportedNamespaces: any = {}
 
           // Build namespaces based on selected account
