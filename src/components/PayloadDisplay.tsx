@@ -1,9 +1,11 @@
+import React from 'react'
+
 interface PayloadDisplayProps {
   payload: any
 }
 
 export default function PayloadDisplay({ payload }: PayloadDisplayProps) {
-  const formatPayload = (obj: any, depth = 0): JSX.Element => {
+  const formatPayload = (obj: any, depth = 0): React.JSX.Element => {
     if (obj === null || obj === undefined) {
       return <span style={{ color: '#666' }}>null</span>
     }

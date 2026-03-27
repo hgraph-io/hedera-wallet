@@ -60,7 +60,7 @@ export class CryptoUtils {
 
       const decoder = new TextDecoder()
       return decoder.decode(decrypted)
-    } catch (error) {
+    } catch {
       throw new Error('Failed to decrypt data. Invalid password or corrupted data.')
     }
   }
